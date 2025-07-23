@@ -1,6 +1,11 @@
 import ui
+import database as db
 
-ui.start()
+db.connect()
+db.createParserTable()
+    
+if __name__ == "__main__":
+    ui.start()
 
 
 

@@ -1,12 +1,17 @@
-import parser
+import parserprocessor as pp
 
 def start():
     while True:
+        mode = int(input("Choose mode(OfferParser) - Enter mode number: "))
         id = input("Enter user id: ")
-        list = parser.offerParser(id)
-        for offerClass in list:
-            print(offerClass.listName)
-            for lot in offerClass.offers:
-                print(f"{lot.desc} {f"{lot.amount}шт" if lot.amount != 0 else ""} {lot.price}".strip())
+        if mode == 1:
+            isGroupingOn = input("Group offers?(Yes/No): ").strip()
+            if isGroupingOn == "Yes":
+                pp.startParsing(id,True,mode)
+            else:
+                pp.startParsing(id,False,mode)   
+        else:
+            pp.startParsing(id,False,mode) 
+                
         
         
