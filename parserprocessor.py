@@ -83,7 +83,3 @@ def parse_reviews_and_show_changes(userid):
             if not old_review:
                 print(f"\n[{currentTime}] Обнаружен новый отзыв\n{review.data} - {review.text}")
             db.add_review(review)
-        for unchecked_review in db.get_unchecked_reviews_by_userid(userid):
-            print(f"\n[{currentTime}] Отзыв был удален\n{unchecked_review.data} - {unchecked_review.text}")
-            db.delete_review_by_hash(db.hash_review(unchecked_review))
-        time.sleep(15)
