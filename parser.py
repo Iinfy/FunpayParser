@@ -13,6 +13,12 @@ class OffersGroup:
     def __init__(self,ListName):
         self.listName = ListName
         self.offers = []
+
+class Review:
+    def __init__(self,userid,data,text):
+        self.userid = userid
+        self.data = data
+        self.text = text
         
         
 
@@ -46,4 +52,14 @@ def offerParser(id,isGroupingOn):
             OffersList.append(offerclass)
             
     return OffersList
+
+def review_parser(id):
+    reviews_list = []
+    answer = requests.get(f"https://funpay.com/users/{id}/")
+    html = BS(answer.content,'html.parser')
+    for review in html.select(".offer > .dyn-table > .dyn-table-body > .review-container"):
+        review_data = review.select_one(".review-item-detail").text.strip()
+        review_text = review.select_one(".review-item-text").text.strip()
+        reviews_list.append(Review(id,review_data,review_text))
+    return reviews_list
 

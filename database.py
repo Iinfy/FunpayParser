@@ -1,10 +1,10 @@
 import sqlite3
 import hashlib
 import re
-from parser import Lot
+from parser import Lot, Review
 
-connection = None
-cursor = None
+connection :sqlite3.Connection = None
+cursor : sqlite3.Cursor = None
 
 class LotChanges():
     def __init__(self,desc,amount,price):
@@ -23,6 +23,7 @@ def createParserTable():
     global cursor
     global connection
     cursor.execute("CREATE TABLE IF NOT EXISTS parseddata (hash TEXT UNIQUE, userid BIGINT, desc TEXT, amount BIGINT, price double, checked INT)")
+    cursor.execute("CREATE TABLE IF NOT EXISTS parsedreviews (hash TEXT UNIQUE, userid BIGINT, data TEXT, text TEXT, checked INT)")
     connection.commit()
     
 def addLot(lot):
@@ -44,11 +45,10 @@ def getLotByHash(hash):
     else:
         return False
     
-    
-def uncheckLots(id):
+def uncheckLots(userid):
     global cursor
     global connection
-    cursor.execute(f"UPDATE parseddata SET checked = 0 WHERE userid = {id}")
+    cursor.execute(f"UPDATE parseddata SET checked = 0 WHERE userid = {userid}")
     connection.commit()
     
 def getUncheckedLots(id):
@@ -67,10 +67,55 @@ def deleteLotByHash(hash):
     cursor.execute(f"DELETE FROM parseddata WHERE hash = '{hash}'")
     connection.commit()
 
+def add_review(review):
+    global connection
+    global cursor
+    userid = review.userid
+    data = review.data
+    text = review.text
+    cursor.execute(f"INSERT INTO parsedreviews(hash,userid,data,text,checked) VALUES ('{hash_review(review)}',{userid},'{data}','{text}', 1) ON CONFLICT(hash) DO UPDATE SET data = excluded.data, text = excluded.text, checked = 1")
+    connection.commit()
+
+def get_review_by_hash(hash):
+    global cursor
+    global connection
+    result = cursor.execute(f"SELECT * FROM parsedreviews WHERE hash = '{hash}'")
+    rawLot = cursor.fetchone()
+    if rawLot:
+        review = Review(rawLot[1],rawLot[2],rawLot[3])
+        return review
+    else:
+        return False
+
+def uncheck_reviews_by_userid(userid):
+    global cursor
+    global connection
+    cursor.execute(f"UPDATE parsedreviews SET checked = 0 WHERE userid = {userid}")
+    connection.commit()
+
+def get_unchecked_reviews_by_userid(userid):
+    global cursor
+    global connection
+    cursor.execute(f"SELECT * FROM parsedreviews WHERE userid = {userid} AND checked = 0")
+    unchecked_reviews = []
+    reviews_list = cursor.fetchall()
+    for review in reviews_list:
+        unchecked_reviews.append(Review(review[1],review[2],review[3]))
+    return unchecked_reviews
+
+def delete_review_by_hash(hash):
+    global cursor
+    global connection
+    cursor.execute(f"DELETE FROM parsedreviews WHERE hash = '{hash}'")
+    connection.commit()
 
 def hashLotDesc(lot):
-    hashdata = f"{lot.desc}_{lot.id}"
-    return hashlib.sha256(hashdata.encode("utf-8")).hexdigest()
+    hash_data = f"{lot.desc}_{lot.id}"
+    return hashlib.sha256(hash_data.encode("utf-8")).hexdigest()
+
+def hash_review(review):
+    hash_data = f"{review.data}_{review.text}"
+    return  hashlib.sha256(hash_data.encode("utf-8")).hexdigest()
 
 
     
