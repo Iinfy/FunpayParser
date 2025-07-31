@@ -50,15 +50,14 @@ def parseOffersAndShowChanges(id):
         db.uncheckLots(id)
         list = parser.offerParser(id,False)
         for lot in list:
-            try:
-                oldLot = db.getLotByHash(db.hashLotDesc(lot))
-            except:
-                db.addLot(lot)
+            oldLot = db.getLotByHash(db.hashLotDesc(lot))
             if oldLot:
                 old_amount = int(oldLot.amount)
                 new_amount = int((lot.amount).replace(" ", "").strip())
                 if new_amount < old_amount:
                     print(f"\n[{currentTime}] Совершена покупка \n{lot.desc}\n{old_amount} -> {new_amount}({old_amount - new_amount})\nСумма покупки: {(old_amount - new_amount)*oldLot.price}р")
+                    purchase = db.Purchase(id, lot.desc, old_amount - new_amount, lot.price, datetime.now())
+                    db.add_purchase(purchase)
                 elif new_amount > old_amount:
                     print(f"\n[{currentTime}] Лот пополнен\n{lot.desc}\n{old_amount} -> {new_amount}")
             elif not oldLot:

@@ -1,4 +1,5 @@
 import requests
+from datetime import datetime
 from bs4 import BeautifulSoup as BS
 
 
@@ -15,10 +16,11 @@ class OffersGroup:
         self.offers = []
 
 class Review:
-    def __init__(self,userid,data,text):
+    def __init__(self,userid,data,text, date):
         self.userid = userid
         self.data = data
         self.text = text
+        self.date = date
         
         
 
@@ -60,6 +62,6 @@ def review_parser(id):
     for review in html.select(".offer > .dyn-table > .dyn-table-body > .review-container"):
         review_data = review.select_one(".review-item-detail").text.strip()
         review_text = review.select_one(".review-item-text").text.strip()
-        reviews_list.append(Review(id,review_data,review_text))
+        reviews_list.append(Review(id,review_data,review_text, datetime.now()))
     return reviews_list
 
