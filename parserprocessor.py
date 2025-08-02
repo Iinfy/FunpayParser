@@ -27,6 +27,10 @@ def startParsing(id,isGroupingOn,mode):
             if toStop == "e":
                 parse_thread.terminate()
                 break
+    elif mode == 5:
+        show_user_purchases(id)
+    elif mode == 6:
+        show_user_reviews(id)
 
 
 def parseAndShowUserOffers(id,isGroupingOn):
@@ -82,3 +86,15 @@ def parse_reviews_and_show_changes(userid):
             if not old_review:
                 print(f"\n[{currentTime}] Обнаружен новый отзыв\n{review.data} - {review.text}")
             db.add_review(review)
+
+def show_user_purchases(userid):
+    purchases = db.get_user_purchases(userid)
+    for purchase in purchases:
+        print(f"\n[{purchase.date}] Покупка\n{purchase.desc}\n{purchase.amount}шт\nСумма: {purchase.amount * purchase.price}")
+    print(f"\nВсе покупки пользователя {userid} отображены")
+
+def show_user_reviews(userid):
+    reviews = db.get_user_reviews(userid)
+    for review in reviews:
+        print(f"\n[{review.date}] Отзыв\n{review.data} - {review.text}")
+    print(f"\nВсе отзывы пользователя {userid} отображены")

@@ -114,6 +114,17 @@ def delete_review_by_hash(hash):
     cursor.execute(f"DELETE FROM parsedreviews WHERE hash = '{hash}'")
     connection.commit()
 
+def get_user_reviews(userid):
+    global cursor
+    global connection
+    cursor.execute("SELECT * FROM parsedreviews WHERE userid = ?",(userid,))
+    raw_data = cursor.fetchall()
+    reviews = []
+    for review in raw_data:
+        reviews.append(Review(userid,review[2],review[3],review[5]))
+    return reviews
+
+
 def add_purchase(purchase):
     global cursor
     global connection
@@ -121,6 +132,17 @@ def add_purchase(purchase):
     print(f"{purchase.userid}, '{purchase.desc}', {purchase.amount}, {price}, {purchase.date})")
     cursor.execute(f"INSERT INTO purchases (userid, desc, amount, price, date) VALUES ({purchase.userid}, '{purchase.desc}', {purchase.amount}, {price}, '{purchase.date}')")
     connection.commit()
+
+def get_user_purchases(userid):
+    global cursor
+    global connection
+    cursor.execute("SELECT * FROM purchases WHERE userid = ?",(userid,))
+    raw_data = cursor.fetchall()
+    purchases = []
+    for purchase in raw_data:
+        purchases.append(Purchase(userid,purchase[1],purchase[2],purchase[3],purchase[4]))
+    return purchases
+
 
 def hashLotDesc(lot):
     hash_data = f"{lot.desc}_{lot.id}"
