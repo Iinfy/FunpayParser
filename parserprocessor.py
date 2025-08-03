@@ -4,12 +4,12 @@ from multiprocessing import Process
 import time
 from datetime import datetime
 
-def startParsing(id,isGroupingOn,mode):
+def startParsing(id,isGroupingOn,mode,parsing_frequency):
     if mode == 1:
         parseAndShowUserOffers(id,isGroupingOn)
         print("Parsed successful")
     elif mode == 2:
-        parseThread = Process(target=parseOffersAndShowChanges, args=(id,))
+        parseThread = Process(target=parseOffersAndShowChanges, args=(id,parsing_frequency,))
         parseThread.start()
         while True:
             toStop = input("Enter 'e' to stop parsing ")
@@ -20,7 +20,7 @@ def startParsing(id,isGroupingOn,mode):
         show_reviews(id)
         print("Parsed successful")
     elif mode == 4:
-        parse_thread = Process(target=parse_reviews_and_show_changes, args=(id,))
+        parse_thread = Process(target=parse_reviews_and_show_changes, args=(id,parsing_frequency,))
         parse_thread.start()
         while True:
             toStop = input("Enter 'e' to stop parsing ")
@@ -47,10 +47,10 @@ def parseAndShowUserOffers(id,isGroupingOn):
             db.addLot(lot)
             print(f"{lot.desc} {f"\n{lot.amount}шт" if lot.amount != 0 else ""} {lot.price}".strip())
             
-def parseOffersAndShowChanges(id):
+def parseOffersAndShowChanges(id, parsing_frequency):
     while True:
+
         currentTime = datetime.now().time().strftime("%H:%M:%S")
-        time.sleep(15)
         db.uncheckLots(id)
         list = parser.offerParser(id,False)
         for lot in list:
@@ -70,13 +70,14 @@ def parseOffersAndShowChanges(id):
         for lot in db.getUncheckedLots(id):
             print(f"\n[{currentTime}] Лот был выкуплен или удален\n{lot.desc}\nЦена: {lot.price}р")
             db.deleteLotByHash(db.hashLotDesc(lot))
+        time.sleep(parsing_frequency)
 
 def show_reviews(id):
     reviews_list = parser.review_parser(id)
     for review in reviews_list:
         print(f"{review.data} - {review.text}")
 
-def parse_reviews_and_show_changes(userid):
+def parse_reviews_and_show_changes(userid,parsing_frequency):
     while True:
         currentTime = datetime.now().time().strftime("%H:%M:%S")
         reviews_list = parser.review_parser(userid)
@@ -86,6 +87,7 @@ def parse_reviews_and_show_changes(userid):
             if not old_review:
                 print(f"\n[{currentTime}] Обнаружен новый отзыв\n{review.data} - {review.text}")
             db.add_review(review)
+        time.sleep(parsing_frequency)
 
 def show_user_purchases(userid):
     purchases = db.get_user_purchases(userid)
