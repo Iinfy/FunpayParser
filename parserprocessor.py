@@ -3,8 +3,10 @@ import database as db
 from multiprocessing import Process
 import time
 from datetime import datetime
+from logger import log
 
 def startParsing(id,isGroupingOn,mode,parsing_frequency):
+    log.info(f"Set parsing mode to {mode}")
     if mode == 1:
         parseAndShowUserOffers(id,isGroupingOn)
         print("Parsed successful")
@@ -14,6 +16,7 @@ def startParsing(id,isGroupingOn,mode,parsing_frequency):
         while True:
             toStop = input("Enter 'e' to stop parsing ")
             if toStop == "e":
+                log.info("Stoping parsing due to exit command")
                 parseThread.terminate()
                 break
     elif mode == 3:
@@ -25,6 +28,7 @@ def startParsing(id,isGroupingOn,mode,parsing_frequency):
         while True:
             toStop = input("Enter 'e' to stop parsing ")
             if toStop == "e":
+                log.info("Stoping parsing due to exit command")
                 parse_thread.terminate()
                 break
     elif mode == 5:
@@ -46,10 +50,10 @@ def parseAndShowUserOffers(id,isGroupingOn):
         for lot in list:
             db.addLot(lot)
             print(f"{lot.desc} {f"\n{lot.amount}шт" if lot.amount != 0 else ""} {lot.price}".strip())
+    log.info(f"Lots parsing completed successful, User ID: {id}")
             
 def parseOffersAndShowChanges(id, parsing_frequency):
     while True:
-
         currentTime = datetime.now().time().strftime("%H:%M:%S")
         db.uncheckLots(id)
         list = parser.offerParser(id,False)
@@ -71,11 +75,13 @@ def parseOffersAndShowChanges(id, parsing_frequency):
             print(f"\n[{currentTime}] Лот был выкуплен или удален\n{lot.desc}\nЦена: {lot.price}р")
             db.deleteLotByHash(db.hashLotDesc(lot))
         time.sleep(parsing_frequency)
+        log.info(f"Parsing user offers and comparing with old, User ID: {id}, Parsing frequency: {parsing_frequency}s")
 
 def show_reviews(id):
     reviews_list = parser.review_parser(id)
     for review in reviews_list:
         print(f"{review.data} - {review.text}")
+    log.info("Review parsing completed successful")
 
 def parse_reviews_and_show_changes(userid,parsing_frequency):
     while True:
@@ -88,15 +94,18 @@ def parse_reviews_and_show_changes(userid,parsing_frequency):
                 print(f"\n[{currentTime}] Обнаружен новый отзыв\n{review.data} - {review.text}")
             db.add_review(review)
         time.sleep(parsing_frequency)
+        log.info(f"Parsing user reviews and comparing with old, User ID: {id}, Parsing frequency: {parsing_frequency}s")
 
 def show_user_purchases(userid):
     purchases = db.get_user_purchases(userid)
     for purchase in purchases:
         print(f"\n[{purchase.date}] Покупка\n{purchase.desc}\n{purchase.amount}шт\nСумма: {purchase.amount * purchase.price}")
     print(f"\nВсе покупки пользователя {userid} отображены")
+    log.info(f"Requested user purchases, User ID: {userid}")
 
 def show_user_reviews(userid):
     reviews = db.get_user_reviews(userid)
     for review in reviews:
         print(f"\n[{review.date}] Отзыв\n{review.data} - {review.text}")
     print(f"\nВсе отзывы пользователя {userid} отображены")
+    log.info(f"Requested user reviews, User ID: {userid}")

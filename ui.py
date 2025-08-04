@@ -1,6 +1,8 @@
 import parserprocessor as pp
+from logger import log
 
 def start():
+    log.info("UI started successful")
     while True:
         mode = int(input("Choose mode(OfferParser) - Enter mode number: "))
         id = input("Enter user id: ")

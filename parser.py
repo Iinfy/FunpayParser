@@ -1,6 +1,7 @@
 import requests
 from datetime import datetime
 from bs4 import BeautifulSoup as BS
+from logger import log
 
 
 class Lot:
@@ -23,8 +24,9 @@ class Review:
         self.date = date
         
         
-
+log.catch(level="ERROR")
 def offerParser(id,isGroupingOn):
+    log.info(f"Parsing user lots, Grouping: {isGroupingOn}, User ID: {id}")
     OffersList = []
     answer = requests.get(f"https://funpay.com/users/{id}/")
     if not isGroupingOn:
@@ -52,10 +54,11 @@ def offerParser(id,isGroupingOn):
                 lot = Lot(desc,amount,price,id)
                 offerclass.offers.append(lot)
             OffersList.append(offerclass)
-            
     return OffersList
 
+@log.catch(level="ERROR")
 def review_parser(id):
+    log.info(f"Parsing user reviews, User ID: {id}")
     reviews_list = []
     answer = requests.get(f"https://funpay.com/users/{id}/")
     html = BS(answer.content,'html.parser')
