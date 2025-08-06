@@ -50,41 +50,51 @@ def parseAndShowUserOffers(id,isGroupingOn):
         for lot in list:
             db.addLot(lot)
             print(f"{lot.desc} {f"\n{lot.amount}шт" if lot.amount != 0 else ""} {lot.price}".strip())
-    log.info(f"Lots parsing completed successful, User ID: {id}")
+    log.info(f"Lots parsing completed successful, User ID: {id}, Mode: LotsParser(1)")
             
 def parseOffersAndShowChanges(id, parsing_frequency):
     while True:
+        changes = 0
         currentTime = datetime.now().time().strftime("%H:%M:%S")
         db.uncheckLots(id)
         list = parser.offerParser(id,False)
-        for lot in list:
-            oldLot = db.getLotByHash(db.hashLotDesc(lot))
-            if oldLot:
-                old_amount = int(oldLot.amount)
-                new_amount = int((lot.amount).replace(" ", "").strip())
-                if new_amount < old_amount:
-                    print(f"\n[{currentTime}] Совершена покупка \n{lot.desc}\n{old_amount} -> {new_amount}({old_amount - new_amount})\nСумма покупки: {(old_amount - new_amount)*oldLot.price}р")
-                    purchase = db.Purchase(id, lot.desc, old_amount - new_amount, lot.price, datetime.now())
-                    db.add_purchase(purchase)
-                elif new_amount > old_amount:
-                    print(f"\n[{currentTime}] Лот пополнен\n{lot.desc}\n{old_amount} -> {new_amount}")
-            elif not oldLot:
-                print(f"\n[{currentTime}] Обнаружен новый лот\n{lot.desc}\nКол-во: {lot.amount}\nЦена: {str(lot.price).strip()}")
-            db.addLot(lot)
-        for lot in db.getUncheckedLots(id):
-            print(f"\n[{currentTime}] Лот был выкуплен или удален\n{lot.desc}\nЦена: {lot.price}р")
-            db.deleteLotByHash(db.hashLotDesc(lot))
-        log.info(f"Parsed user lots, User ID: {id}, Parsing frequency: {parsing_frequency}s, Mode: Compare(2), Lot count: {len(list)}")
+        if list:
+            for lot in list:
+                oldLot = db.getLotByHash(db.hashLotDesc(lot))
+                if oldLot:
+                    old_amount = int(oldLot.amount)
+                    new_amount = int((lot.amount).replace(" ", "").strip())
+                    if new_amount < old_amount:
+                        print(f"\n[{currentTime}] Совершена покупка \n{lot.desc}\n{old_amount} -> {new_amount}({old_amount - new_amount})\nСумма покупки: {(old_amount - new_amount)*oldLot.price}р")
+                        purchase = db.Purchase(id, lot.desc, old_amount - new_amount, lot.price, datetime.now())
+                        db.add_purchase(purchase)
+                        changes = changes + 1
+                    elif new_amount > old_amount:
+                        print(f"\n[{currentTime}] Лот пополнен\n{lot.desc}\n{old_amount} -> {new_amount}")
+                        changes = changes + 1
+                elif not oldLot:
+                    print(f"\n[{currentTime}] Обнаружен новый лот\n{lot.desc}\nКол-во: {lot.amount}\nЦена: {str(lot.price).strip()}")
+                    changes = changes + 1
+                db.addLot(lot)
+            for lot in db.getUncheckedLots(id):
+                print(f"\n[{currentTime}] Лот был выкуплен или удален\n{lot.desc}\nЦена: {lot.price}р")
+                changes = changes + 1
+                db.deleteLotByHash(db.hashLotDesc(lot))
+            if changes > 0:
+                log.info(f"Changes found, Parsing frequency: {parsing_frequency}s, Mode: Comparator(2), Lot count: {len(list)}, Changes: {changes}")
+        else:
+            log.warning(f"Empty lot list, Parsing frequency: {parsing_frequency}s, Mode: Comparator(2)")
         time.sleep(parsing_frequency)
 
 def show_reviews(id):
     reviews_list = parser.review_parser(id)
     for review in reviews_list:
         print(f"{review.data} - {review.text}")
-    log.info("Review parsing completed successful")
+    log.info(f"Review parsing completed successful, User ID: {id}, Mode: ReviewParser(3)")
 
 def parse_reviews_and_show_changes(userid,parsing_frequency):
     while True:
+        changes = False
         currentTime = datetime.now().time().strftime("%H:%M:%S")
         reviews_list = parser.review_parser(userid)
         db.uncheck_reviews_by_userid(userid)
@@ -92,6 +102,7 @@ def parse_reviews_and_show_changes(userid,parsing_frequency):
             old_review = db.get_review_by_hash(db.hash_review(review))
             if not old_review:
                 print(f"\n[{currentTime}] Обнаружен новый отзыв\n{review.data} - {review.text}")
+                changes = True
             db.add_review(review)
         log.info(f"Parsing user reviews and comparing with old, User ID: {id}, Parsing frequency: {parsing_frequency}s")
         time.sleep(parsing_frequency)
@@ -105,7 +116,8 @@ def show_user_purchases(userid):
 
 def show_user_reviews(userid):
     reviews = db.get_user_reviews(userid)
-    for review in reviews:
-        print(f"\n[{review.date}] Отзыв\n{review.data} - {review.text}")
-    print(f"\nВсе отзывы пользователя {userid} отображены")
-    log.info(f"Requested user reviews, User ID: {userid}")
+    if reviews:
+        for review in reviews:
+            print(f"\n[{review.date}] Отзыв\n{review.data} - {review.text}")
+        print(f"\nВсе отзывы пользователя {userid} отображены")
+        log.info(f"Requested user reviews, User ID: {userid}")

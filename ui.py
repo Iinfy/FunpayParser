@@ -1,6 +1,7 @@
 import parserprocessor as pp
 from logger import log
 
+@log.catch(level="CRITICAL")
 def start():
     log.info("UI started successful")
     while True:

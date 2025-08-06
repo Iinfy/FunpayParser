@@ -24,11 +24,11 @@ class Review:
         self.date = date
         
         
-log.catch(level="ERROR")
+@log.catch(level="ERROR")
 def offerParser(id,isGroupingOn):
-    log.info(f"Parsing user lots, Grouping: {isGroupingOn}, User ID: {id}")
     OffersList = []
     answer = requests.get(f"https://funpay.com/users/{id}/")
+    log.info(f"Parsing user lots, Grouping: {isGroupingOn}, User ID: {id}, Status code: {answer.status_code}")
     if not isGroupingOn:
         html = BS(answer.content,'html.parser')
         for offer in html.select(".mb20 > .offer"):
@@ -58,9 +58,9 @@ def offerParser(id,isGroupingOn):
 
 @log.catch(level="ERROR")
 def review_parser(id):
-    log.info(f"Parsing user reviews, User ID: {id}")
     reviews_list = []
     answer = requests.get(f"https://funpay.com/users/{id}/")
+    log.info(f"Parsing user reviews, User ID: {id}, Status code: {answer.status_code}")
     html = BS(answer.content,'html.parser')
     for review in html.select(".offer > .dyn-table > .dyn-table-body > .review-container"):
         review_data = review.select_one(".review-item-detail").text.strip()
