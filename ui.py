@@ -7,7 +7,7 @@ def start():
     while True:
         mode = int(input("Choose mode(OfferParser) - Enter mode number: "))
         id = input("Enter user id: ")
-        parsing_frequency = int(input("Enter parsing frequency: "))
+        parsing_frequency = float(input("Enter parsing frequency: "))
         if mode == 1:
             isGroupingOn = input("Group offers?(Yes/No): ").strip()
             if isGroupingOn == "Yes":
