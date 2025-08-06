@@ -8,9 +8,11 @@ from logger import log
 def startParsing(id,isGroupingOn,mode,parsing_frequency):
     log.info(f"Set parsing mode to {mode}")
     if mode == 1:
+        log.info(f"Parsing started with mode {mode}")
         parseAndShowUserOffers(id,isGroupingOn)
         print("Parsed successful")
     elif mode == 2:
+        log.info(f"Parsing started with mode {mode}")
         parseThread = Process(target=parseOffersAndShowChanges, args=(id,parsing_frequency,))
         parseThread.start()
         while True:
@@ -20,9 +22,11 @@ def startParsing(id,isGroupingOn,mode,parsing_frequency):
                 parseThread.terminate()
                 break
     elif mode == 3:
+        log.info(f"Parsing started with mode {mode}")
         show_reviews(id)
         print("Parsed successful")
     elif mode == 4:
+        log.info(f"Parsing started with mode {mode}")
         parse_thread = Process(target=parse_reviews_and_show_changes, args=(id,parsing_frequency,))
         parse_thread.start()
         while True:
@@ -32,9 +36,14 @@ def startParsing(id,isGroupingOn,mode,parsing_frequency):
                 parse_thread.terminate()
                 break
     elif mode == 5:
+        log.info(f"Parsing started with mode {mode}")
         show_user_purchases(id)
     elif mode == 6:
+        log.info(f"Parsing started with mode {mode}")
         show_user_reviews(id)
+    else:
+        log.warning("Incorrect parsing mode")
+
 
 
 def parseAndShowUserOffers(id,isGroupingOn):
@@ -94,7 +103,7 @@ def show_reviews(id):
 
 def parse_reviews_and_show_changes(userid,parsing_frequency):
     while True:
-        changes = False
+        changes = 0
         currentTime = datetime.now().time().strftime("%H:%M:%S")
         reviews_list = parser.review_parser(userid)
         db.uncheck_reviews_by_userid(userid)
@@ -102,9 +111,10 @@ def parse_reviews_and_show_changes(userid,parsing_frequency):
             old_review = db.get_review_by_hash(db.hash_review(review))
             if not old_review:
                 print(f"\n[{currentTime}] Обнаружен новый отзыв\n{review.data} - {review.text}")
-                changes = True
+                changes = changes + 1
             db.add_review(review)
-        log.info(f"Parsing user reviews and comparing with old, User ID: {id}, Parsing frequency: {parsing_frequency}s")
+        if changes > 0:
+            log.info(f"Parsing user reviews and comparing with old, User ID: {id}, Parsing frequency: {parsing_frequency}s, Changes: {changes}")
         time.sleep(parsing_frequency)
 
 def show_user_purchases(userid):
@@ -120,4 +130,4 @@ def show_user_reviews(userid):
         for review in reviews:
             print(f"\n[{review.date}] Отзыв\n{review.data} - {review.text}")
         print(f"\nВсе отзывы пользователя {userid} отображены")
-        log.info(f"Requested user reviews, User ID: {userid}")
+    log.info(f"Requested user reviews, User ID: {userid}")

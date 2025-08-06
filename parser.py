@@ -28,7 +28,7 @@ class Review:
 def offerParser(id,isGroupingOn):
     OffersList = []
     answer = requests.get(f"https://funpay.com/users/{id}/")
-    log.info(f"Parsing user lots, Grouping: {isGroupingOn}, User ID: {id}, Status code: {answer.status_code}")
+    log.debug(f"Parsing user lots, Grouping: {isGroupingOn}, User ID: {id}, Status code: {answer.status_code}")
     if answer.status_code == 200:
         if not isGroupingOn:
             html = BS(answer.content,'html.parser')
@@ -64,7 +64,7 @@ def offerParser(id,isGroupingOn):
 def review_parser(id):
     reviews_list = []
     answer = requests.get(f"https://funpay.com/users/{id}/")
-    log.info(f"Parsing user reviews, User ID: {id}, Status code: {answer.status_code}")
+    log.debug(f"Parsing user reviews, User ID: {id}, Status code: {answer.status_code}")
     html = BS(answer.content,'html.parser')
     for review in html.select(".offer > .dyn-table > .dyn-table-body > .review-container"):
         review_data = review.select_one(".review-item-detail").text.strip()
