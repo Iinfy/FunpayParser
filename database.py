@@ -3,6 +3,7 @@ import hashlib
 import re
 from parser import Lot, Review
 from datetime import datetime
+from logger import log
 
 connection :sqlite3.Connection = None
 cursor : sqlite3.Cursor = None
@@ -22,15 +23,18 @@ def connect():
     global cursor
     connection = sqlite3.connect("parser.db")
     cursor = connection.cursor()
-    
+    log.info("Database connection opened")
+
 def createParserTable():
     global cursor
     global connection
     cursor.execute("CREATE TABLE IF NOT EXISTS parseddata (hash TEXT UNIQUE, userid BIGINT, desc TEXT, amount BIGINT, price double, checked INT)")
     cursor.execute("CREATE TABLE IF NOT EXISTS parsedreviews (hash TEXT UNIQUE, userid BIGINT, data TEXT, text TEXT, checked INT, date DATETIME)")
     cursor.execute("CREATE TABLE IF NOT EXISTS purchases (userid BIGINT, desc TEXT, amount BIGINT, price double, date DATETIME)")
+    log.info("Database tables found")
     connection.commit()
-    
+
+@log.catch(level="ERROR")
 def addLot(lot):
     global cursor
     global connection
@@ -72,6 +76,7 @@ def deleteLotByHash(hash):
     cursor.execute(f"DELETE FROM parseddata WHERE hash = '{hash}'")
     connection.commit()
 
+@log.catch(level="ERROR")
 def add_review(review):
     global connection
     global cursor
@@ -124,12 +129,11 @@ def get_user_reviews(userid):
         reviews.append(Review(userid,review[2],review[3],review[5]))
     return reviews
 
-
+@log.catch(level="ERROR")
 def add_purchase(purchase):
     global cursor
     global connection
     price = re.sub(r"[^\d.,]", "", purchase.price)
-    print(f"{purchase.userid}, '{purchase.desc}', {purchase.amount}, {price}, {purchase.date})")
     cursor.execute(f"INSERT INTO purchases (userid, desc, amount, price, date) VALUES ({purchase.userid}, '{purchase.desc}', {purchase.amount}, {price}, '{purchase.date}')")
     connection.commit()
 
@@ -151,8 +155,3 @@ def hashLotDesc(lot):
 def hash_review(review):
     hash_data = f"{review.data}_{review.text}"
     return  hashlib.sha256(hash_data.encode("utf-8")).hexdigest()
-
-
-    
-    
-    
