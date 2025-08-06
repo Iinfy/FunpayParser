@@ -41,7 +41,6 @@ def addLot(lot):
     price = re.sub(r"[^\d.,]", "", lot.price)
     amount = lot.amount.replace(" ","")
     cursor.execute(f"INSERT INTO parseddata(hash,userid,desc,amount,price,checked) VALUES ('{hashLotDesc(lot)}', {lot.id} ,'{lot.desc}',{amount},{price}, 1) ON CONFLICT(hash) DO UPDATE SET desc = excluded.desc, amount = excluded.amount, price = excluded.price, checked = 1")
-    log.info(f"Lot {lot.desc} added to database, Hash: {hashLotDesc(lot)}, User ID: {lot.id}")
     connection.commit()
     
 def getLotByHash(hash):
@@ -59,7 +58,6 @@ def uncheckLots(userid):
     global cursor
     global connection
     cursor.execute(f"UPDATE parseddata SET checked = 0 WHERE userid = {userid}")
-    log.info(f"Lots unchecked, User ID: {userid}")
     connection.commit()
     
 def getUncheckedLots(id):
@@ -76,7 +74,6 @@ def deleteLotByHash(hash):
     global cursor
     global connection
     cursor.execute(f"DELETE FROM parseddata WHERE hash = '{hash}'")
-    log.info(f"Lot deleted, Hash: {hash}")
     connection.commit()
 
 @log.catch(level="ERROR")
@@ -137,7 +134,6 @@ def add_purchase(purchase):
     global cursor
     global connection
     price = re.sub(r"[^\d.,]", "", purchase.price)
-    print(f"{purchase.userid}, '{purchase.desc}', {purchase.amount}, {price}, {purchase.date})")
     cursor.execute(f"INSERT INTO purchases (userid, desc, amount, price, date) VALUES ({purchase.userid}, '{purchase.desc}', {purchase.amount}, {price}, '{purchase.date}')")
     connection.commit()
 

@@ -74,8 +74,8 @@ def parseOffersAndShowChanges(id, parsing_frequency):
         for lot in db.getUncheckedLots(id):
             print(f"\n[{currentTime}] Лот был выкуплен или удален\n{lot.desc}\nЦена: {lot.price}р")
             db.deleteLotByHash(db.hashLotDesc(lot))
+        log.info(f"Parsed user lots, User ID: {id}, Parsing frequency: {parsing_frequency}s, Mode: Compare(2), Lot count: {len(list)}")
         time.sleep(parsing_frequency)
-        log.info(f"Parsing user offers and comparing with old, User ID: {id}, Parsing frequency: {parsing_frequency}s")
 
 def show_reviews(id):
     reviews_list = parser.review_parser(id)
@@ -93,8 +93,8 @@ def parse_reviews_and_show_changes(userid,parsing_frequency):
             if not old_review:
                 print(f"\n[{currentTime}] Обнаружен новый отзыв\n{review.data} - {review.text}")
             db.add_review(review)
-        time.sleep(parsing_frequency)
         log.info(f"Parsing user reviews and comparing with old, User ID: {id}, Parsing frequency: {parsing_frequency}s")
+        time.sleep(parsing_frequency)
 
 def show_user_purchases(userid):
     purchases = db.get_user_purchases(userid)
