@@ -17,7 +17,7 @@ class Purchase:
         self.price = price
         self.date = date
         
-
+@log.catch(level="ERROR")
 def connect():
     global connection
     global cursor
@@ -25,6 +25,7 @@ def connect():
     cursor = connection.cursor()
     log.info("Database connection opened")
 
+@log.catch(level="ERROR")
 def createParserTable():
     global cursor
     global connection
@@ -147,6 +148,34 @@ def get_user_purchases(userid):
         purchases.append(Purchase(userid,purchase[1],purchase[2],purchase[3],purchase[4]))
     return purchases
 
+def delete_all_tables():
+    global connection
+    global cursor
+    cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%';")
+    tables = cursor.fetchall()
+    for table in tables:
+        table_name = table[0]
+        cursor.execute(f'DROP TABLE IF EXISTS "{table_name}";')
+        log.info(f"Table dropped: {table_name}")
+    connection.commit()
+
+def delete_all_lots():
+    global connection
+    global cursor
+    cursor.execute("DELETE FROM parseddata")
+    connection.commit()
+
+def delete_all_reviews():
+    global connection
+    global cursor
+    cursor.execute("DELETE FROM parsedreviews")
+    connection.commit()
+
+def delete_all_purchases():
+    global connection
+    global cursor
+    cursor.execute("DELETE FROM purchases")
+    connection.commit()
 
 def hashLotDesc(lot):
     hash_data = f"{lot.desc}_{lot.id}"
