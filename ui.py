@@ -20,13 +20,16 @@ def start():
                 mode = int(input("Choose mode(OfferParser) - Enter mode number: "))
                 userid = input("Enter user id: ")
                 parsing_frequency = float(input("Enter parsing frequency: "))
-                if parsing_frequency < 5:
+                if parsing_frequency <= 5:
                     print("Parsing frequency lower than 5 seconds may occur problems")
                     continue_with_current_speed = input("Continue? (Y/n): ")
-                if continue_with_current_speed.lower() == "y":
+                else:
+                    continue_with_current_speed = "n"
+                if continue_with_current_speed.lower() == "y" or parsing_frequency > 5:
                     log.info(
                         f"Settings received, Mode: {mode}, User ID: {userid}, Parsing frequency: {parsing_frequency}")
-                    log.warning(f"Parsing frequency lower than 5s, this may occur problems")
+                    if continue_with_current_speed:
+                        log.warning(f"Parsing frequency lower than 5s, this may occur problems")
                     if mode == 1:
                         isGroupingOn = input("Group offers?(Yes/No): ").strip()
                         if isGroupingOn == "Yes":
@@ -41,7 +44,8 @@ def start():
                 rc.recover()
             elif int(menu_mode) == 4:
                 break
-        except:
+        except Exception as ex:
             print("\nIncorrect value\n")
+            log.warning(ex)
 
         
