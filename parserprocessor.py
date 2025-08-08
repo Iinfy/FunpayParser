@@ -65,9 +65,9 @@ def parseOffersAndShowChanges(id, parsing_frequency):
     while True:
         changes = 0
         currentTime = datetime.now().time().strftime("%H:%M:%S")
-        db.uncheckLots(id)
         list = parser.offerParser(id,False)
         if list:
+            db.uncheckLots(id)
             for lot in list:
                 oldLot = db.getLotByHash(db.hashLotDesc(lot))
                 if oldLot:
