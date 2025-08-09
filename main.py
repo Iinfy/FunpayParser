@@ -3,7 +3,7 @@ import database as db
 from logger import log
 import settings
 
-log.info("FunPay Parser Application started")
+log.info("\n\nFunPay Parser Application started")
 db.connect()
 db.createParserTable()
 
