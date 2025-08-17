@@ -1,3 +1,5 @@
+import re
+
 import parser
 import database as db
 from multiprocessing import Process
@@ -73,6 +75,7 @@ def parseOffersAndShowChanges(id, parsing_frequency):
                 if oldLot:
                     old_amount = int(oldLot.amount)
                     new_amount = int((lot.amount).replace(" ", "").strip())
+                    price = re.sub(r"[^\d.,]", "", lot.price)
                     if new_amount < old_amount:
                         print(f"\n[{currentTime}] Совершена покупка \n{lot.desc}\n{old_amount} -> {new_amount}({old_amount - new_amount})\nСумма покупки: {(old_amount - new_amount)*oldLot.price}р")
                         purchase = db.Purchase(id, lot.desc, old_amount - new_amount, lot.price, datetime.now())
@@ -81,6 +84,8 @@ def parseOffersAndShowChanges(id, parsing_frequency):
                     elif new_amount > old_amount:
                         print(f"\n[{currentTime}] Лот пополнен\n{lot.desc}\n{old_amount} -> {new_amount}")
                         changes = changes + 1
+                    elif float(oldLot.price) != float(price):
+                        print(f"\n[{currentTime}] Цена изменена\n{lot.desc}\n{oldLot.price} -> {price}")
                 elif not oldLot:
                     print(f"\n[{currentTime}] Обнаружен новый лот\n{lot.desc}\nКол-во: {lot.amount}\nЦена: {str(lot.price).strip()}")
                     changes = changes + 1
