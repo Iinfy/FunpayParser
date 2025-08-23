@@ -86,6 +86,7 @@ def parseOffersAndShowChanges(id, parsing_frequency):
                         changes = changes + 1
                     elif float(oldLot.price) != float(price):
                         print(f"\n[{currentTime}] Цена изменена\n{lot.desc}\n{oldLot.price} -> {price}")
+                        changes = changes + 1
                 elif not oldLot:
                     print(f"\n[{currentTime}] Обнаружен новый лот\n{lot.desc}\nКол-во: {lot.amount}\nЦена: {str(lot.price).strip()}")
                     changes = changes + 1
