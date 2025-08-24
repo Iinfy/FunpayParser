@@ -29,31 +29,42 @@ def connect():
 def createParserTable():
     global cursor
     global connection
-    cursor.execute("CREATE TABLE IF NOT EXISTS parseddata (hash TEXT UNIQUE, userid BIGINT, desc TEXT, amount BIGINT, price double, checked INT)")
+    cursor.execute("CREATE TABLE IF NOT EXISTS parseddata (lot_id BIGINT UNIQUE,"
+                   "userid BIGINT,"
+                   "desc TEXT,"
+                   "amount BIGINT,"
+                   "price double,"
+                   "checked INT)")
     cursor.execute("CREATE TABLE IF NOT EXISTS parsedreviews (hash TEXT UNIQUE, userid BIGINT, data TEXT, text TEXT, checked INT, date DATETIME)")
     cursor.execute("CREATE TABLE IF NOT EXISTS purchases (userid BIGINT, desc TEXT, amount BIGINT, price double, date DATETIME)")
     log.info("Database tables found")
     connection.commit()
 
 @log.catch(level="ERROR")
-def addLot(lot):
+def add_lot(lot):
     global cursor
     global connection
     price = re.sub(r"[^\d.,]", "", lot.price)
     amount = lot.amount.replace(" ","")
-    cursor.execute(f"INSERT INTO parseddata(hash,userid,desc,amount,price,checked) VALUES ('{hashLotDesc(lot)}', {lot.id} ,'{lot.desc}',{amount},{price}, 1) ON CONFLICT(hash) DO UPDATE SET desc = excluded.desc, amount = excluded.amount, price = excluded.price, checked = 1")
+    cursor.execute(f"INSERT INTO parseddata(lot_id,userid,desc,amount,price,checked) VALUES ('{lot.lot_id}', {lot.userid} ,'{lot.desc}',{amount},{price}, 1) ON CONFLICT(lot_id) DO UPDATE SET desc = excluded.desc, amount = excluded.amount, price = excluded.price, checked = 1")
     connection.commit()
-    
-def getLotByHash(hash):
+
+def get_lot_by_id(lot_id):
     global cursor
     global connection
-    result = cursor.execute(f"SELECT * FROM parseddata WHERE hash = '{hash}'")
-    rawLot = cursor.fetchone()
-    if rawLot:
-        lot = Lot(rawLot[2],rawLot[3],rawLot[4],rawLot[1])
+    lot = cursor.execute(f"SELECT * FROM parseddata WHERE lot_id = {lot_id}")
+    raw_lot = cursor.fetchone()
+    if raw_lot:
+        lot = Lot(raw_lot[2],raw_lot[3],raw_lot[4],raw_lot[1],raw_lot[0])
         return lot
     else:
         return False
+
+def delete_lot_by_id(lot_id):
+    global cursor
+    global connection
+    cursor.execute(f"DELETE FROM parseddata WHERE lot_id = {lot_id}")
+    connection.commit()
     
 def uncheckLots(userid):
     global cursor
@@ -61,21 +72,15 @@ def uncheckLots(userid):
     cursor.execute(f"UPDATE parseddata SET checked = 0 WHERE userid = {userid}")
     connection.commit()
     
-def getUncheckedLots(id):
+def getUncheckedLots(userid):
     global cursor
     global connection
-    cursor.execute(f"SELECT * FROM parseddata WHERE userid = {id} AND checked = 0")
-    uncheckedList = []
-    uncheckedOffers = cursor.fetchall()
-    for offer in uncheckedOffers:
-        uncheckedList.append(Lot(offer[2],offer[3],offer[4],offer[1]))
-    return uncheckedList
-
-def deleteLotByHash(hash):
-    global cursor
-    global connection
-    cursor.execute(f"DELETE FROM parseddata WHERE hash = '{hash}'")
-    connection.commit()
+    cursor.execute(f"SELECT * FROM parseddata WHERE userid = {userid} AND checked = 0")
+    unchecked_lots_list = []
+    raw_lots = cursor.fetchall()
+    for offer in raw_lots:
+        unchecked_lots_list.append(Lot(offer[2],offer[3],offer[4],offer[1],offer[0]))
+    return unchecked_lots_list
 
 @log.catch(level="ERROR")
 def add_review(review):
@@ -178,7 +183,7 @@ def delete_all_purchases():
     connection.commit()
 
 def hashLotDesc(lot):
-    hash_data = f"{lot.desc}_{lot.id}"
+    hash_data = f"{lot.desc}_{lot.userid}"
     return hashlib.sha256(hash_data.encode("utf-8")).hexdigest()
 
 def hash_review(review):

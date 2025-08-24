@@ -1,7 +1,7 @@
+import settings
 import ui
 import database as db
 from logger import log
-import settings
 
 log.info("\n\nFunPay Parser Application started")
 db.connect()

@@ -2,15 +2,17 @@ import requests
 from datetime import datetime
 from bs4 import BeautifulSoup as BS
 from logger import log
+import urllib.parse as urp
 
 
 class Lot:
-    def __init__(self,desc,amount,price,userid):
-        self.id = userid
+    def __init__(self,desc,amount,price,userid,lot_id):
         self.desc = desc
         self.amount = amount
         self.price = price
-        
+        self.userid = userid
+        self.lot_id = lot_id
+
 class OffersGroup:
     def __init__(self,ListName):
         self.listName = ListName
@@ -22,8 +24,7 @@ class Review:
         self.data = data
         self.text = text
         self.date = date
-        
-        
+
 @log.catch(level="ERROR")
 def offerParser(id,isGroupingOn):
     OffersList = []
@@ -39,7 +40,8 @@ def offerParser(id,isGroupingOn):
                     amount_elem = item.select_one(".tc-amount")
                     amount = amount_elem.text if amount_elem else "0"
                     price = item.select(".tc-price")[0].text
-                    lot = Lot(desc,amount,price,id)
+                    lot_url = parse_lot_id_from_url(item.get("href"))
+                    lot = Lot(desc,amount,price,id,lot_url)
                     OffersList.append(lot)
         else:
             html = BS(answer.content,'html.parser')
@@ -48,11 +50,13 @@ def offerParser(id,isGroupingOn):
                 offerclass = OffersGroup(listName)
                 container = offer.select(".offer-tc-container")[0]
                 for item in container.select("a"):
+                    lot_link = item.get("href")
                     desc = item.select_one(".tc-desc > .tc-desc-text").text
                     amount_elem = item.select_one(".tc-amount")
                     amount = amount_elem.text if amount_elem else "0"
                     price = item.select(".tc-price")[0].text
-                    lot = Lot(desc,amount,price,id)
+                    lot_url = parse_lot_id_from_url(item.get("href"))
+                    lot = Lot(desc, amount, price, id, lot_url)
                     offerclass.offers.append(lot)
                 OffersList.append(offerclass)
         return OffersList
@@ -72,3 +76,11 @@ def review_parser(id):
         reviews_list.append(Review(id,review_data,review_text, datetime.now()))
     return reviews_list
 
+def parse_lot_id_from_url(url):
+    parsed_url = urp.urlparse(url)
+    try:
+        lot_id = urp.parse_qs(parsed_url.query)['id'][0]
+        return lot_id
+    except:
+        log.error("URL has no lot id")
+        return False

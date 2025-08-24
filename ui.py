@@ -19,7 +19,7 @@ def start():
             if menu_mode.lower() == "exit":
                 break
             if int(menu_mode) == 1:
-                userid = input("Enter user id: ")
+                userid = input("Enter user userid: ")
                 mode = cfg.parser_settings["parsing_mode"]
                 parsing_frequency = cfg.parser_settings["parsing_frequency"]
                 if parsing_frequency < 5:
