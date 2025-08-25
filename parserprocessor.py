@@ -7,11 +7,11 @@ import time
 from datetime import datetime
 from logger import log
 
-def startParsing(id,isGroupingOn,mode,parsing_frequency):
+def startParsing(id,mode,parsing_frequency):
     log.info(f"Set parsing mode to {mode}")
     if mode == 1:
         log.info(f"Parsing started with mode {mode}")
-        parse_and_show_user_offers(id,isGroupingOn)
+        parse_and_show_user_offers(id)
         print("Parsed successful")
     elif mode == 2:
         log.info(f"Parsing started with mode {mode}")
@@ -48,27 +48,18 @@ def startParsing(id,isGroupingOn,mode,parsing_frequency):
 
 
 
-def parse_and_show_user_offers(id,isGroupingOn):
-    if isGroupingOn:
-        list = parser.offerParser(id,True)
-        for offerClass in list:
-            print(offerClass.listName)
-            for lot in offerClass.offers:
-                db.add_lot(lot)
-                print(f"{lot.desc} {f"\n{lot.amount}шт" if lot.amount != 0 else ""} {lot.price}".strip())
-    else:
-        list = parser.offerParser(id,False)
-        for raw_lot in list:
-            lot = parser.Lot(raw_lot.desc,raw_lot.amount,raw_lot.price,raw_lot.userid,parser.parse_lot_id_from_url(raw_lot))
-            db.add_lot(lot)
-            print(f"{lot.desc} {f"\n{lot.amount}шт" if lot.amount != 0 else ""} {lot.price}".strip())
+def parse_and_show_user_offers(id):
+    list = parser.offerParser(id)
+    for lot in list:
+        db.add_lot(lot)
+        print(f"{lot.desc} {f"\n{lot.amount}шт" if lot.amount != 0 else ""} {lot.price}".strip())
     log.info(f"Lots parsing completed successful, User ID: {id}, Mode: LotsParser(1)")
             
 def parseOffersAndShowChanges(id, parsing_frequency):
     while True:
         changes = 0
         currentTime = datetime.now().time().strftime("%H:%M:%S")
-        list = parser.offerParser(id,False)
+        list = parser.offerParser(id)
         if list:
             db.uncheckLots(id)
             for lot in list:

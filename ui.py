@@ -26,18 +26,13 @@ def start():
                     print("Parsing frequency lower than 5 seconds may occur problems")
                     continue_with_current_speed = input("Continue? (Y/n): ")
                 else:
-                    continue_with_current_speed = "n"
+                    continue_with_current_speed = "y"
                 if continue_with_current_speed.lower() == "y" or parsing_frequency >= 5:
                     log.info(
                         f"Settings received, Mode: {mode}, User ID: {userid}, Parsing frequency: {parsing_frequency}")
                     if parsing_frequency < 5:
                         log.warning(f"Parsing frequency lower than 5s, this may occur problems")
-                    if mode == 1:
-                        isGroupingOn = input("Group offers?(Yes/No): ").strip()
-                        if isGroupingOn == "Yes":
-                            pp.startParsing(userid, True, mode, parsing_frequency)
-                    else:
-                        pp.startParsing(userid, False, mode, parsing_frequency)
+                    pp.startParsing(userid, mode, parsing_frequency)
                 else:
                     continue
             elif int(menu_mode) == 2:

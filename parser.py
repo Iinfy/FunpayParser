@@ -26,39 +26,22 @@ class Review:
         self.date = date
 
 @log.catch(level="ERROR")
-def offerParser(id,isGroupingOn):
+def offerParser(id):
     OffersList = []
     answer = requests.get(f"https://funpay.com/users/{id}/")
-    log.debug(f"Parsing user lots, Grouping: {isGroupingOn}, User ID: {id}, Status code: {answer.status_code}")
+    log.debug(f"Parsing user lots, User ID: {id}, Status code: {answer.status_code}")
     if answer.status_code == 200:
-        if not isGroupingOn:
-            html = BS(answer.content,'html.parser')
-            for offer in html.select(".mb20 > .offer"):
-                container = offer.select(".offer-tc-container")[0]
-                for item in container.select("a"):
-                    desc = item.select_one(".tc-desc > .tc-desc-text").text
-                    amount_elem = item.select_one(".tc-amount")
-                    amount = amount_elem.text if amount_elem else "0"
-                    price = item.select(".tc-price")[0].text
-                    lot_url = parse_lot_id_from_url(item.get("href"))
-                    lot = Lot(desc,amount,price,id,lot_url)
-                    OffersList.append(lot)
-        else:
-            html = BS(answer.content,'html.parser')
-            for offer in html.select(".mb20 > .offer"):
-                listName = offer.select_one(".offer-list-title-container").text
-                offerclass = OffersGroup(listName)
-                container = offer.select(".offer-tc-container")[0]
-                for item in container.select("a"):
-                    lot_link = item.get("href")
-                    desc = item.select_one(".tc-desc > .tc-desc-text").text
-                    amount_elem = item.select_one(".tc-amount")
-                    amount = amount_elem.text if amount_elem else "0"
-                    price = item.select(".tc-price")[0].text
-                    lot_url = parse_lot_id_from_url(item.get("href"))
-                    lot = Lot(desc, amount, price, id, lot_url)
-                    offerclass.offers.append(lot)
-                OffersList.append(offerclass)
+        html = BS(answer.content,'html.parser')
+        for offer in html.select(".mb20 > .offer"):
+            container = offer.select(".offer-tc-container")[0]
+            for item in container.select("a"):
+                desc = item.select_one(".tc-desc > .tc-desc-text").text
+                amount_elem = item.select_one(".tc-amount")
+                amount = amount_elem.text if amount_elem else "0"
+                price = item.select(".tc-price")[0].text
+                lot_url = parse_lot_id_from_url(item.get("href"))
+                lot = Lot(desc,amount,price,id,lot_url)
+                OffersList.append(lot)
         return OffersList
     else:
         log.error(f"Parsing error, Status code: {answer.status_code}")
