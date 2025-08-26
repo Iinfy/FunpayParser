@@ -39,9 +39,6 @@ def startParsing(id,mode,parsing_frequency):
                 break
     elif mode == 5:
         log.info(f"Parsing started with mode {mode}")
-        show_user_purchases(id)
-    elif mode == 6:
-        log.info(f"Parsing started with mode {mode}")
         show_user_reviews(id)
     else:
         log.warning("Incorrect parsing mode")
@@ -58,37 +55,51 @@ def parse_and_show_user_offers(id):
 def parseOffersAndShowChanges(id, parsing_frequency):
     while True:
         changes = 0
-        currentTime = datetime.now().time().strftime("%H:%M:%S")
-        list = parser.offerParser(id)
+        current_time = datetime.now().time().strftime("%H:%M:%S")
+        current_datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        lot_list = parser.offerParser(id)
         if list:
             db.uncheckLots(id)
-            for lot in list:
+            for lot in lot_list:
                 old_lot = db.get_lot_by_id(lot.lot_id)
                 if old_lot:
                     old_amount = int(old_lot.amount)
                     new_amount = int((lot.amount).replace(" ", "").strip())
                     price = re.sub(r"[^\d.,]", "", lot.price)
                     if new_amount < old_amount:
-                        print(f"\n[{currentTime}] Совершена покупка \n{lot.desc}\n{old_amount} -> {new_amount}({old_amount - new_amount})\nСумма покупки: {(old_amount - new_amount)*old_lot.price}р")
-                        purchase = db.Purchase(id, lot.desc, old_amount - new_amount, lot.price, datetime.now())
-                        db.add_purchase(purchase)
+                        message = f"Purchase \n{lot.desc}\n{old_amount} -> {new_amount}({old_amount - new_amount})\nAmount: {(old_amount - new_amount)*old_lot.price}Rub"
+                        print(f"\n[{current_time}]{message}")
+                        action = db.Action(current_datetime,lot.userid,lot.lot_id,"purchase", message)
+                        db.add_action(action)
                         changes = changes + 1
                     elif new_amount > old_amount:
-                        print(f"\n[{currentTime}] Лот пополнен\n{lot.desc}\n{old_amount} -> {new_amount}")
+                        message = f"Lot restocked\n{lot.desc}\n{old_amount} -> {new_amount}"
+                        print(f"\n[{current_time}]{message}")
+                        action = db.Action(current_datetime, lot.userid, lot.lot_id, "restock", message)
+                        db.add_action(action)
                         changes = changes + 1
                     elif float(old_lot.price) != float(price):
-                        print(f"\n[{currentTime}] Цена изменена\n{lot.desc}\n{old_lot.price} -> {price}")
+                        message = f"Price changed\n{lot.desc}\n{old_lot.price}Rub -> {price}Rub"
+                        print(f"\n[{current_time}]{message}")
+                        action = db.Action(current_datetime, lot.userid, lot.lot_id, "price", message)
+                        db.add_action(action)
                         changes = changes + 1
                 elif not old_lot:
-                    print(f"\n[{currentTime}] Обнаружен новый лот\n{lot.desc}\nКол-во: {lot.amount}\nЦена: {str(lot.price).strip()}")
+                    message = f"New lot found\n{lot.desc}\nAmount: {lot.amount}\nPrice: {str(lot.price).strip()}Rub"
+                    print(f"\n[{current_time}]{message}")
+                    action = db.Action(current_datetime, lot.userid, lot.lot_id, "new_lot", message)
+                    db.add_action(action)
                     changes = changes + 1
                 db.add_lot(lot)
             for lot in db.getUncheckedLots(id):
-                print(f"\n[{currentTime}] Лот был выкуплен или удален\n{lot.desc}\nЦена: {lot.price}р")
+                message = f"The lot was purchased or removed\n{lot.desc}\nPrice: {lot.price}Rub"
+                print(f"\n[{current_time}]{message}")
+                action = db.Action(current_datetime, lot.userid, lot.lot_id, "lot_deleted", message)
+                db.add_action(action)
                 changes = changes + 1
                 db.delete_lot_by_id(lot.lot_id)
             if changes > 0:
-                log.info(f"Changes found, Parsing frequency: {parsing_frequency}s, Mode: Comparator(2), Lot count: {len(list)}, Changes: {changes}")
+                log.info(f"Changes found, Parsing frequency: {parsing_frequency}s, Mode: Comparator(2), Lot count: {len(lot_list)}, Changes: {changes}")
         else:
             log.warning(f"Empty lot list, Parsing frequency: {parsing_frequency}s, Mode: Comparator(2)")
         time.sleep(parsing_frequency)
@@ -114,13 +125,6 @@ def parse_reviews_and_show_changes(userid,parsing_frequency):
         if changes > 0:
             log.info(f"Parsing user reviews and comparing with old, User ID: {id}, Parsing frequency: {parsing_frequency}s, Changes: {changes}")
         time.sleep(parsing_frequency)
-
-def show_user_purchases(userid):
-    purchases = db.get_user_purchases(userid)
-    for purchase in purchases:
-        print(f"\n[{purchase.date}] Покупка\n{purchase.desc}\n{purchase.amount}шт\nСумма: {purchase.amount * purchase.price}")
-    print(f"\nВсе покупки пользователя {userid} отображены")
-    log.info(f"Requested user purchases, User ID: {userid}")
 
 def show_user_reviews(userid):
     reviews = db.get_user_reviews(userid)

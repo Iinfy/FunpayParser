@@ -16,6 +16,15 @@ class Purchase:
         self.amount = amount
         self.price = price
         self.date = date
+
+class Action:
+    def __init__(self,date,user_id,lot_id,action_type,message):
+        self.id = 0
+        self.date = date
+        self.user_id = user_id
+        self.lot_id = lot_id
+        self.action_type = action_type
+        self.message = message
         
 @log.catch(level="ERROR")
 def connect():
@@ -36,7 +45,13 @@ def createParserTable():
                    "price double,"
                    "checked INT)")
     cursor.execute("CREATE TABLE IF NOT EXISTS parsedreviews (hash TEXT UNIQUE, userid BIGINT, data TEXT, text TEXT, checked INT, date DATETIME)")
-    cursor.execute("CREATE TABLE IF NOT EXISTS purchases (userid BIGINT, desc TEXT, amount BIGINT, price double, date DATETIME)")
+    cursor.execute("CREATE TABLE IF NOT EXISTS action_log "
+                   "(id INTEGER PRIMARY KEY,"
+                   "date DATETIME,"
+                   "user_id BIGINT,"
+                   "lot_id BIGINT,"
+                   "action_type TEXT,"
+                   "message TEXT)")
     log.info("Database tables found")
     connection.commit()
 
@@ -135,24 +150,6 @@ def get_user_reviews(userid):
         reviews.append(Review(userid,review[2],review[3],review[5]))
     return reviews
 
-@log.catch(level="ERROR")
-def add_purchase(purchase):
-    global cursor
-    global connection
-    price = re.sub(r"[^\d.,]", "", purchase.price)
-    cursor.execute(f"INSERT INTO purchases (userid, desc, amount, price, date) VALUES ({purchase.userid}, '{purchase.desc}', {purchase.amount}, {price}, '{purchase.date}')")
-    connection.commit()
-
-def get_user_purchases(userid):
-    global cursor
-    global connection
-    cursor.execute("SELECT * FROM purchases WHERE userid = ?",(userid,))
-    raw_data = cursor.fetchall()
-    purchases = []
-    for purchase in raw_data:
-        purchases.append(Purchase(userid,purchase[1],purchase[2],purchase[3],purchase[4]))
-    return purchases
-
 def delete_all_tables():
     global connection
     global cursor
@@ -176,15 +173,11 @@ def delete_all_reviews():
     cursor.execute("DELETE FROM parsedreviews")
     connection.commit()
 
-def delete_all_purchases():
-    global connection
+def add_action(action : Action):
     global cursor
-    cursor.execute("DELETE FROM purchases")
+    global connection
+    cursor.execute("INSERT INTO action_log (date,user_id,lot_id,action_type,message) VALUES (?,?,?,?,?)", (action.date,action.user_id,action.lot_id,action.action_type,action.message))
     connection.commit()
-
-def hashLotDesc(lot):
-    hash_data = f"{lot.desc}_{lot.userid}"
-    return hashlib.sha256(hash_data.encode("utf-8")).hexdigest()
 
 def hash_review(review):
     hash_data = f"{review.data}_{review.text}"
