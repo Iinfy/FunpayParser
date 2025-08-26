@@ -18,8 +18,8 @@ class Purchase:
         self.date = date
 
 class Action:
-    def __init__(self,date,user_id,lot_id,action_type,message):
-        self.id = 0
+    def __init__(self,date,user_id,lot_id,action_type,message,action_id = 0):
+        self.action_id = 0
         self.date = date
         self.user_id = user_id
         self.lot_id = lot_id
@@ -178,6 +178,18 @@ def add_action(action : Action):
     global connection
     cursor.execute("INSERT INTO action_log (date,user_id,lot_id,action_type,message) VALUES (?,?,?,?,?)", (action.date,action.user_id,action.lot_id,action.action_type,action.message))
     connection.commit()
+
+@log.catch(level="WARNING",reraise=False)
+def get_user_actions(user_id):
+    global cursor
+    global connection
+    cursor.execute("SELECT * FROM action_log WHERE user_id = ?",(user_id,))
+    raw_actions = cursor.fetchall()
+    action_list = []
+    for raw_action in raw_actions:
+        action = Action(raw_action[1],raw_action[2],raw_action[3],raw_action[4],raw_action[5],raw_action[0])
+        action_list.append(action)
+    return action_list
 
 def hash_review(review):
     hash_data = f"{review.data}_{review.text}"

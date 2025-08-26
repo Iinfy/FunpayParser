@@ -1,3 +1,4 @@
+import logging
 import re
 
 import parser
@@ -51,14 +52,16 @@ def parse_and_show_user_offers(id):
         db.add_lot(lot)
         print(f"{lot.desc} {f"\n{lot.amount}шт" if lot.amount != 0 else ""} {lot.price}".strip())
     log.info(f"Lots parsing completed successful, User ID: {id}, Mode: LotsParser(1)")
-            
+
+
+@log.catch(level=logging.ERROR,reraise=False)
 def parseOffersAndShowChanges(id, parsing_frequency):
     while True:
         changes = 0
         current_time = datetime.now().time().strftime("%H:%M:%S")
         current_datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         lot_list = parser.offerParser(id)
-        if list:
+        if lot_list:
             db.uncheckLots(id)
             for lot in lot_list:
                 old_lot = db.get_lot_by_id(lot.lot_id)
@@ -67,7 +70,7 @@ def parseOffersAndShowChanges(id, parsing_frequency):
                     new_amount = int((lot.amount).replace(" ", "").strip())
                     price = re.sub(r"[^\d.,]", "", lot.price)
                     if new_amount < old_amount:
-                        message = f"Purchase \n{lot.desc}\n{old_amount} -> {new_amount}({old_amount - new_amount})\nAmount: {(old_amount - new_amount)*old_lot.price}Rub"
+                        message = f"Purchase \n{lot.desc}\n{old_amount} -> {new_amount}({old_amount - new_amount})\nAmount: {(old_amount - new_amount)*old_lot.price}"
                         print(f"\n[{current_time}]{message}")
                         action = db.Action(current_datetime,lot.userid,lot.lot_id,"purchase", message)
                         db.add_action(action)
@@ -85,14 +88,14 @@ def parseOffersAndShowChanges(id, parsing_frequency):
                         db.add_action(action)
                         changes = changes + 1
                 elif not old_lot:
-                    message = f"New lot found\n{lot.desc}\nAmount: {lot.amount}\nPrice: {str(lot.price).strip()}Rub"
+                    message = f"New lot found\n{lot.desc}\nAmount: {lot.amount}\nPrice: {str(lot.price).strip()}"
                     print(f"\n[{current_time}]{message}")
                     action = db.Action(current_datetime, lot.userid, lot.lot_id, "new_lot", message)
                     db.add_action(action)
                     changes = changes + 1
                 db.add_lot(lot)
             for lot in db.getUncheckedLots(id):
-                message = f"The lot was purchased or removed\n{lot.desc}\nPrice: {lot.price}Rub"
+                message = f"The lot was purchased or removed\n{lot.desc}\nPrice: {lot.price}"
                 print(f"\n[{current_time}]{message}")
                 action = db.Action(current_datetime, lot.userid, lot.lot_id, "lot_deleted", message)
                 db.add_action(action)
@@ -133,3 +136,9 @@ def show_user_reviews(userid):
             print(f"\n[{review.date}] Отзыв\n{review.data} - {review.text}")
         print(f"\nВсе отзывы пользователя {userid} отображены")
     log.info(f"Requested user reviews, User ID: {userid}")
+
+def show_user_actions(user_id):
+    action_list = db.get_user_actions(user_id)
+    for action in action_list:
+        print(f"\n[{action.date}]{action.message}")
+    log.info(f"User actions showed, User ID: {user_id}")

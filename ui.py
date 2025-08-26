@@ -13,7 +13,8 @@ def start():
               "1.Parser\n"
               "2.Settings\n"
               "3.Recovery\n"
-              "4.Exit")
+              "4.Actions\n"
+              "5.Exit")
         try:
             menu_mode = input("\nSelect menu mode: ")
             if menu_mode.lower() == "exit":
@@ -58,6 +59,9 @@ def start():
             elif int(menu_mode) == 3:
                 rc.recover()
             elif int(menu_mode) == 4:
+                user_id = input("Enter user ID: ")
+                pp.show_user_actions(user_id)
+            elif int(menu_mode) == 5:
                 break
         except Exception as ex:
             print("\nIncorrect value\n")
